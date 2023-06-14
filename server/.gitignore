@@ -1,0 +1,7 @@
+online_cfg
+.idea
+__pycache__
+.DS_Store
+.env.local
+*.http
+.qiniu_pythonsdk_hostscache.json
