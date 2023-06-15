@@ -37,6 +37,7 @@ class WxMpCfg(Base):
     mp_app_secret = Column(String, nullable=False, default='')
     auth_url_path = Column(String, nullable=False, default='')
     auth_content = Column(String, nullable=False, default='')
+    encoding_aes_key = Column(String, nullable=False, default='')
     create_time = Column(BigInteger, nullable=False, default=0)
     update_time = Column(BigInteger, nullable=False, default=0)
     delete_time = Column(BigInteger, nullable=False, default=0)
