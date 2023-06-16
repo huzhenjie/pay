@@ -31,4 +31,4 @@ async def deal_mp_notify(request: Request,
         return PlainTextResponse(echostr)
     if req_content_type == 'application/xml':
         pass
-    return res_success(body)
+    return PlainTextResponse('')
