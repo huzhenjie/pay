@@ -9,6 +9,21 @@ from app.dao import models
 
 
 class Wechat():
+
+    @staticmethod
+    def save_mp_notify(appid, openid, ts, msg_type, content, db: Session = Depends(get_db)):
+        now_ts = int(time.time())
+        info = models.WxMpNotify(
+            mp_appid=appid,
+            openid=openid if openid else '',
+            ts=ts if ts else now_ts,
+            msg_type=msg_type,
+            content=content,
+            create_time=now_ts
+        )
+        db.add(info)
+        db.commit()
+
     @staticmethod
     def get_access_token(pt, appid, db: Session = Depends(get_db)):
         now_ts = int(time.time())
@@ -64,17 +79,16 @@ class Wechat():
 
     @staticmethod
     def get_mp_auth_content(path, db: Session = Depends(get_db)):
-        if not path:
-            return 'Empty path'
-        if not path.lower().endswith('.txt'):
-            return 'Illegality path'
+        # if not path:
+        #     return 'Empty path'
+        # if not path.lower().endswith('.txt'):
+        #     return 'Illegality path'
         cfg = db.query(models.WxMpCfg) \
             .filter(and_(models.WxMpCfg.auth_url_path == path, models.WxMpCfg.delete_time == 0)) \
             .first()
         if not cfg:
-            return 'Unknown path'
+            return 'Unknown path: %s' % path
         return cfg.auth_content
-
 
     @staticmethod
     def get_open_id():
@@ -87,4 +101,3 @@ class Wechat():
         # res = requests.post('https://yinqiantong.com/test', data=post_data) post from
         # res = requests.post('https://yinqiantong.com/test', json=post_data) post json
         # print(res.text)
-

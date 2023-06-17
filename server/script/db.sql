@@ -45,6 +45,21 @@ create table pay_wx_mp_cfg
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='微信公众号后台配置 mp.weixin.qq.com';
 
+create table pay_wx_mp_notify
+(
+    id          bigint unsigned not null auto_increment comment '自增主键',
+    mp_appid    varchar(32)     not null default '' comment '公众号开发者ID(AppID)',
+    ts          bigint unsigned not null default 0 comment 'CreateTime',
+    openid      varchar(64)     not null default '' comment 'openid',
+    msg_type    varchar(16)     not null default '' comment 'MsgType',
+    content     varchar(2048)   not null default '' comment '回调内容',
+    create_time int unsigned    not null default 0 comment '创建时间',
+    primary key (id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='微信公众号回调';
+
+select * from pay_wx_mp_notify;
+
 create table pay_wx_miniapp_cfg
 (
     id            bigint unsigned not null auto_increment comment '自增主键',
@@ -133,6 +148,7 @@ create table pay_access_token
     primary key (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='Access Token';
+
 
 ###############################################
 

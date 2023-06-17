@@ -42,6 +42,16 @@ class WxMpCfg(Base):
     update_time = Column(BigInteger, nullable=False, default=0)
     delete_time = Column(BigInteger, nullable=False, default=0)
 
+class WxMpNotify(Base):
+    __tablename__ = 'pay_wx_mp_notify'
+    id = Column(BigInteger, primary_key=True, index=True)
+    mp_appid = Column(String, nullable=False, default='')
+    ts = Column(BigInteger, nullable=False, default=0)
+    openid = Column(String, nullable=False, default='')
+    msg_type = Column(String, nullable=False, default='')
+    content = Column(String, nullable=False, default='')
+    create_time = Column(BigInteger, nullable=False, default=0)
+
 
 class WxMiniappCfg(Base):
     __tablename__ = 'pay_wx_miniapp_cfg'

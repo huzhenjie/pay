@@ -25,13 +25,14 @@ async def create_user(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@router.get("/{path}", response_class=PlainTextResponse)
+@router.get("/MP_{path}.txt", response_class=PlainTextResponse)
 def create_user(path, db: Session = Depends(get_db)):
-    return wechat.Wechat.get_mp_auth_content(path, db)
+    full_path = "MP_%s.txt" % path
+    return wechat.Wechat.get_mp_auth_content(full_path, db)
 
 
-@router.get("/wx/mp/notify/{app_id}")
-async def deal_mp_notify(app_id: str,
+@router.get("/wx/mp/notify/{appid}")
+async def deal_mp_notify(appid: str,
                          signature: str = None,
                          echostr: str = None,
                          timestamp: str = None,
@@ -39,9 +40,9 @@ async def deal_mp_notify(app_id: str,
     return PlainTextResponse(echostr)
 
 
-@router.post("/wx/mp/notify/{app_id}")
+@router.post("/wx/mp/notify/{appid}")
 async def deal_mp_notify(request: Request,
-                         app_id: str,
+                         appid: str,
                          signature: str = None,
                          timestamp: str = None,
                          nonce: str = None,
@@ -50,9 +51,12 @@ async def deal_mp_notify(request: Request,
                          msg_signature: str = None):
     req_content_type = request.headers['Content-Type']
     body_str = await request.body()
-    print("[MpNotify][Appid:%s][Openid:%s][ContentType:%s]: %s" % (app_id, openid, req_content_type, body_str))
+    print("[MpNotify][Appid:%s][Openid:%s][ContentType:%s]: %s" % (appid, openid, req_content_type, body_str))
     if req_content_type == 'text/xml':
         body = xmltodict.parse(body_str)
         print(body)
         xml = body.get('xml')
+        ts = xml.get('CreateTime', timestamp)
+        msg_type = xml.get('MsgType')
+        wechat.Wechat.save_mp_notify(appid, openid, ts, msg_type, body_str)
     return PlainTextResponse('')
