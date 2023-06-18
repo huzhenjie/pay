@@ -11,7 +11,7 @@ from app.dao import models
 class Wechat():
 
     @staticmethod
-    def save_mp_notify(appid, openid, ts, msg_type, content, db: Session = Depends(get_db)):
+    def save_mp_notify(db, appid, openid, ts, msg_type, content):
         now_ts = int(time.time())
         info = models.WxMpNotify(
             mp_appid=appid,
@@ -25,7 +25,7 @@ class Wechat():
         db.commit()
 
     @staticmethod
-    def get_access_token(pt, appid, db: Session = Depends(get_db)):
+    def get_access_token(db, pt, appid):
         now_ts = int(time.time())
         access_token = db.query(models.AccessToken) \
             .filter(models.AccessToken.appid == appid) \
@@ -78,11 +78,7 @@ class Wechat():
         }
 
     @staticmethod
-    def get_mp_auth_content(path, db: Session = Depends(get_db)):
-        # if not path:
-        #     return 'Empty path'
-        # if not path.lower().endswith('.txt'):
-        #     return 'Illegality path'
+    def get_mp_auth_content(db, path):
         cfg = db.query(models.WxMpCfg) \
             .filter(and_(models.WxMpCfg.auth_url_path == path, models.WxMpCfg.delete_time == 0)) \
             .first()

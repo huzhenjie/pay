@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.router import init_router
+from app.dao.database import SessionLocal
 
 
 async def handle_startup():
@@ -18,6 +19,7 @@ def create_app():
         on_startup=[handle_startup],
         on_shutdown=[handle_shutdown]
     )
+    app.state.db = SessionLocal
 
     init_router(app)
 

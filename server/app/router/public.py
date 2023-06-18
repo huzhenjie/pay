@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
-from sqlalchemy.orm import Session
 import time
 import xmltodict
 
 from app.dao import models
 from app.vo import res_success
 from app.vo import schemas
-from app.dao.database import get_db
 from app.service import wechat
 
 router = APIRouter()
@@ -16,7 +14,8 @@ router = APIRouter()
 # curl -X POST -H 'Content-Type: application/json' -d '{"keyword": "小"}' http://192.168.96.11:8788/test
 @router.get("/test")
 @router.post("/test")
-async def create_user(request: Request, db: Session = Depends(get_db)):
+async def create_user(request: Request):
+    # db = request.app.state.db()
     body_str = await request.body()
     return res_success({
         'req_header': request.headers,
@@ -26,9 +25,10 @@ async def create_user(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/MP_{path}.txt", response_class=PlainTextResponse)
-def create_user(path, db: Session = Depends(get_db)):
+def create_user(request: Request, path):
     full_path = "MP_%s.txt" % path
-    return wechat.Wechat.get_mp_auth_content(full_path, db)
+    db = request.app.state.db()
+    return wechat.Wechat.get_mp_auth_content(db, full_path)
 
 
 @router.get("/wx/mp/notify/{appid}")
@@ -58,5 +58,6 @@ async def deal_mp_notify(request: Request,
         xml = body.get('xml')
         ts = xml.get('CreateTime', timestamp)
         msg_type = xml.get('MsgType')
-        wechat.Wechat.save_mp_notify(appid, openid, ts, msg_type, body_str)
+        db = request.app.state.db()
+        wechat.Wechat.save_mp_notify(db, appid, openid, ts, msg_type, body_str)
     return PlainTextResponse('')

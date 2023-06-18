@@ -58,7 +58,7 @@ create table pay_wx_mp_notify
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='微信公众号回调';
 
-select * from pay_wx_mp_notify;
+select * from pay_wx_mp_cfg;
 
 create table pay_wx_miniapp_cfg
 (

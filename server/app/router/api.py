@@ -11,6 +11,6 @@ router = APIRouter()
 
 @router.post("/api/wx/mp/access-token")
 async def get_access_token(vo: schemas.GetWxAccessTokenVo, db: Session = Depends(get_db)):
-    access_token_info = wechat.Wechat.get_access_token(vo.pt, vo.appid, db)
+    access_token_info = wechat.Wechat.get_access_token(db, vo.pt, vo.appid)
     return res_success(access_token_info)
 
