@@ -1,3 +1,4 @@
+import hashlib
 import json
 import time
 import requests
@@ -85,6 +86,32 @@ class Wechat():
         if not cfg:
             return 'Unknown path: %s' % path
         return cfg.auth_content
+
+    @staticmethod
+    def verify_mp_sign(db, appid, req_signature, timestamp, nonce):
+        cfg = db.query(models.WxMpCfg) \
+            .filter(and_(models.WxMpCfg.mp_appid == appid, models.WxMpCfg.delete_time == 0)) \
+            .first()
+        if not cfg:
+            return False
+        data = [cfg.token, timestamp, nonce]
+        data.sort()
+        origin_str = "".join(data)
+        server_signature = hashlib.sha1(origin_str.encode("utf-8")).hexdigest()
+        return server_signature == req_signature
+
+    @staticmethod
+    def verify_mp_msg_sign(db, appid, req_msg_signature, timestamp, nonce, encrypt):
+        cfg = db.query(models.WxMpCfg) \
+            .filter(and_(models.WxMpCfg.mp_appid == appid, models.WxMpCfg.delete_time == 0)) \
+            .first()
+        if not cfg:
+            return False
+        data = [cfg.token, timestamp, nonce, encrypt]
+        data.sort()
+        origin_str = "".join(data)
+        server_signature = hashlib.sha1(origin_str.encode("utf-8")).hexdigest()
+        return server_signature == req_msg_signature
 
     @staticmethod
     def get_open_id():

@@ -3,15 +3,14 @@ from fastapi.responses import PlainTextResponse
 import time
 import xmltodict
 
+from app.service import wechat
 from app.dao import models
 from app.vo import res_success
 from app.vo import schemas
-from app.service import wechat
 
 router = APIRouter()
 
 
-# curl -X POST -H 'Content-Type: application/json' -d '{"keyword": "小"}' http://192.168.96.11:8788/test
 @router.get("/test")
 @router.post("/test")
 async def create_user(request: Request):
@@ -24,9 +23,9 @@ async def create_user(request: Request):
     })
 
 
-@router.get("/MP_{path}.txt", response_class=PlainTextResponse)
-def create_user(request: Request, path):
-    full_path = "MP_%s.txt" % path
+@router.get("/MP_verify_{verify_id}.txt", response_class=PlainTextResponse)
+def create_user(request: Request, verify_id):
+    full_path = "MP_verify_%s.txt" % verify_id
     db = request.app.state.db()
     return wechat.Wechat.get_mp_auth_content(db, full_path)
 
@@ -49,6 +48,11 @@ async def deal_mp_notify(request: Request,
                          openid: str = None,
                          encrypt_type: str = None,  # aes
                          msg_signature: str = None):
+    db = request.app.state.db()
+    req_sign_ok = wechat.Wechat.verify_mp_sign(db, appid, signature, timestamp, nonce)
+    if not req_sign_ok:
+        print('Req sign error')
+        return PlainTextResponse('')
     req_content_type = request.headers['Content-Type']
     body_str = await request.body()
     print("[MpNotify][Appid:%s][Openid:%s][ContentType:%s]: %s" % (appid, openid, req_content_type, body_str))
@@ -56,8 +60,13 @@ async def deal_mp_notify(request: Request,
         body = xmltodict.parse(body_str)
         print(body)
         xml = body.get('xml')
+        encrypt = xml.get('Encrypt')
+        msg_sign_ok = wechat.Wechat.verify_mp_msg_sign(db, appid, msg_signature, timestamp, nonce, encrypt)
+        if not msg_sign_ok:
+            print('Msg sign error')
+            return PlainTextResponse('')
         ts = xml.get('CreateTime', timestamp)
         msg_type = xml.get('MsgType')
-        db = request.app.state.db()
         wechat.Wechat.save_mp_notify(db, appid, openid, ts, msg_type, body_str)
     return PlainTextResponse('')
+
