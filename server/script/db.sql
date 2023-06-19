@@ -25,6 +25,7 @@ create table pay_wx_mch_cfg
     create_time   int unsigned    not null default 0 comment '创建时间',
     update_time   int unsigned    not null default 0 comment '更新时间',
     delete_time   int unsigned    not null default 0 comment '删除时间',
+    index (mch_id),
     primary key (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='微信支付商户后台配置 pay.weixin.qq.com';
@@ -37,10 +38,12 @@ create table pay_wx_mp_cfg
     mp_app_secret    varchar(64)     not null default '' comment '公众号开发者密码(AppSecret)',
     auth_url_path    varchar(64)     not null default '' comment '如：MP_verify_Sgz1uuMyJEr8yF5c.txt',
     auth_content     varchar(64)     not null default '' comment 'auth_url_path的内容',
+    token            varchar(32)     not null default '' comment '设置与开发-基本配置-服务器配置-令牌Token',
     encoding_aes_key varchar(64)     not null default '' comment '设置与开发-基本配置-服务器配置-消息加解密密钥',
     create_time      int unsigned    not null default 0 comment '创建时间',
     update_time      int unsigned    not null default 0 comment '更新时间',
     delete_time      int unsigned    not null default 0 comment '删除时间',
+    index (mp_appid),
     primary key (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='微信公众号后台配置 mp.weixin.qq.com';
@@ -54,11 +57,11 @@ create table pay_wx_mp_notify
     msg_type    varchar(16)     not null default '' comment 'MsgType',
     content     varchar(2048)   not null default '' comment '回调内容',
     create_time int unsigned    not null default 0 comment '创建时间',
+    index (mp_appid),
     primary key (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='微信公众号回调';
 
-select * from pay_wx_mp_cfg;
 
 create table pay_wx_miniapp_cfg
 (
@@ -69,6 +72,7 @@ create table pay_wx_miniapp_cfg
     create_time   int unsigned    not null default 0 comment '创建时间',
     update_time   int unsigned    not null default 0 comment '更新时间',
     delete_time   int unsigned    not null default 0 comment '删除时间',
+    index (mp_appid),
     primary key (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='微信小程序后台配置 mp.weixin.qq.com';
@@ -81,6 +85,7 @@ create table pay_wx_open_cfg
     create_time int unsigned    not null default 0 comment '创建时间',
     update_time int unsigned    not null default 0 comment '更新时间',
     delete_time int unsigned    not null default 0 comment '删除时间',
+    index (open_appid),
     primary key (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='微信开放平台配置 open.weixin.qq.com';
