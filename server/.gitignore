@@ -4,4 +4,5 @@ __pycache__
 .DS_Store
 .env.local
 *.http
+*.pyc
 .qiniu_pythonsdk_hostscache.json
