@@ -50,13 +50,14 @@ create table pay_wx_mp_cfg
 
 create table pay_wx_mp_notify
 (
-    id          bigint unsigned not null auto_increment comment '自增主键',
-    mp_appid    varchar(32)     not null default '' comment '公众号开发者ID(AppID)',
-    ts          bigint unsigned not null default 0 comment 'CreateTime',
-    openid      varchar(64)     not null default '' comment 'openid',
-    msg_type    varchar(16)     not null default '' comment 'MsgType',
-    content     varchar(2048)   not null default '' comment '回调内容',
-    create_time int unsigned    not null default 0 comment '创建时间',
+    id             bigint unsigned not null auto_increment comment '自增主键',
+    mp_appid       varchar(32)     not null default '' comment '公众号开发者ID(AppID)',
+    ts             bigint unsigned not null default 0 comment 'CreateTime',
+    openid         varchar(64)     not null default '' comment 'openid',
+    msg_type       varchar(16)     not null default '' comment 'MsgType',
+    content        varchar(2048)   not null default '{}' comment '回调内容（解密后）',
+    origin_content varchar(2048)   not null default '' comment '回调内容',
+    create_time    int unsigned    not null default 0 comment '创建时间',
     index (mp_appid),
     primary key (id)
 ) ENGINE = InnoDB

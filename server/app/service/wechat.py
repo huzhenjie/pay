@@ -1,7 +1,11 @@
 import hashlib
 import json
 import time
+import base64
+import socket
+import struct
 import requests
+from Crypto.Cipher import AES
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import and_, or_
@@ -12,14 +16,15 @@ from app.dao import models
 class Wechat():
 
     @staticmethod
-    def save_mp_notify(db, appid, openid, ts, msg_type, content):
+    def save_mp_notify(db, appid, openid, ts, msg_type, origin_content, msg_content_str):
         now_ts = int(time.time())
         info = models.WxMpNotify(
             mp_appid=appid,
             openid=openid if openid else '',
             ts=ts if ts else now_ts,
             msg_type=msg_type,
-            content=content,
+            content=msg_content_str,
+            origin_content=origin_content,
             create_time=now_ts
         )
         db.add(info)
@@ -112,6 +117,29 @@ class Wechat():
         origin_str = "".join(data)
         server_signature = hashlib.sha1(origin_str.encode("utf-8")).hexdigest()
         return server_signature == req_msg_signature
+
+    @staticmethod
+    def decrypt_msg_content(db, appid, encrypt):
+        cfg = db.query(models.WxMpCfg) \
+            .filter(and_(models.WxMpCfg.mp_appid == appid, models.WxMpCfg.delete_time == 0)) \
+            .first()
+        if not cfg:
+            print('WxMpCfg not found appid=%s' % appid)
+            return None
+        aes_key = base64.b64decode(cfg.encoding_aes_key + "=")
+        encrypted_msg = base64.b64decode(encrypt)
+        iv = encrypted_msg[:16]
+        cipher = AES.new(aes_key, AES.MODE_CBC, iv)
+        decrypted_text = cipher.decrypt(encrypted_msg)
+        pad = decrypted_text[-1]
+        decrypted_text = decrypted_text[16:-pad]
+        xml_len = socket.ntohl(struct.unpack("I", decrypted_text[: 4])[0])
+        xml_content = decrypted_text[4: xml_len + 4]
+        from_appid = decrypted_text[xml_len + 4:].decode('utf-8')
+        if from_appid != appid:
+            print('appid not equal，Encrypt_appid=%s Req_appid=%s' % (from_appid, appid))
+            return None
+        return xml_content
 
     @staticmethod
     def get_open_id():

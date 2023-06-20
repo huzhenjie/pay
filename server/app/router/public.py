@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
 import time
+import json
 import xmltodict
 
 from app.service import wechat
@@ -65,8 +66,15 @@ async def deal_mp_notify(request: Request,
         if not msg_sign_ok:
             print('Msg sign error')
             return PlainTextResponse('')
-        ts = xml.get('CreateTime', timestamp)
-        msg_type = xml.get('MsgType')
-        wechat.Wechat.save_mp_notify(db, appid, openid, ts, msg_type, body_str)
+        xml_content = wechat.Wechat.decrypt_msg_content(db, appid, encrypt)
+        if not xml_content:
+            print('Decrypt msg error')
+            return PlainTextResponse('')
+        msg_xml = xmltodict.parse(xml_content)
+        msg_content = msg_xml.get('xml')
+        ts = msg_content.get('CreateTime', timestamp)
+        msg_type = msg_content.get('MsgType')
+        msg_content_str = json.dumps(msg_content)
+        wechat.Wechat.save_mp_notify(db, appid, openid, ts, msg_type, body_str, msg_content_str)
     return PlainTextResponse('')
 

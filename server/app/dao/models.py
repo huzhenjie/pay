@@ -52,6 +52,7 @@ class WxMpNotify(Base):
     openid = Column(String, nullable=False, default='')
     msg_type = Column(String, nullable=False, default='')
     content = Column(String, nullable=False, default='')
+    origin_content = Column(String, nullable=False, default='')
     create_time = Column(BigInteger, nullable=False, default=0)
 
 
