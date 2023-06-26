@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.vo import res_success
@@ -18,4 +18,11 @@ async def create_user(vo: schemas.UnifiedOrderVo, db: Session = Depends(get_db))
 @router.get("/pay/unified-order/{unified_order_id}")
 async def get_unified_order_detail(unified_order_id, db: Session = Depends(get_db)):
     order_info = order.Order.get_unified_order_detail(unified_order_id, db)
+    return res_success(order_info)
+
+
+@router.get("/pay/unified-order/{unified_order_id}/state")
+async def get_unified_order_state(unified_order_id, request: Request):
+    db = request.app.state.db()
+    order_info = order.Order.get_unified_order_state(unified_order_id, db)
     return res_success(order_info)
