@@ -18,7 +18,12 @@ class Order():
             raise HTTPException(status_code=404, detail='没有找到相关App信息')
         if app.allow_payment != 'Y':
             raise HTTPException(status_code=403, detail='当前App支付通道已关闭')
-        expire_time = vo.expire_time + 7200 if vo.expire_time > 0 else int(time.time())
+        now_ts = int(time.time())
+        expire_time = now_ts + 7200
+        if vo.expire_time > 0:
+            if vo.expire_time < now_ts + 60:
+                raise HTTPException(status_code=400, detail='过期时间须大于当前时间1分钟')
+            expire_time = vo.expire_time
         order = models.UnifiedOrder(
             pay_appid=vo.pay_appid,
             unified_order_id=vo.unified_order_id,
@@ -86,6 +91,7 @@ class Order():
             else:
                 continue
             res_cfg.append(res_cfg_item)
+        now_ts = int(time.time())
         return {
             'app': {
                 'appname': app.appname,
@@ -99,7 +105,19 @@ class Order():
                 'last_refund_time': unified_order.last_refund_time,
                 'create_time': unified_order.create_time,
                 'pay_time': unified_order.pay_time,
-                'expire_time': unified_order.expire_time,
+                'expire_in': unified_order.expire_time - now_ts,
                 'return_url': unified_order.return_url,
             }
         }
+
+    @staticmethod
+    def get_unified_order_state(unified_order_id, db: Session = Depends(get_db)):
+        unified_order = db.query(models.UnifiedOrder) \
+            .filter(models.UnifiedOrder.unified_order_id == unified_order_id) \
+            .first()
+        if not unified_order:
+            raise HTTPException(status_code=404, detail='没有找到相关订单信息')
+        return {
+            'pay_time': unified_order.pay_time
+        }
+
