@@ -20,3 +20,4 @@ class UnifiedOrderVo(BaseModel):
 class GetWxAccessTokenVo(BaseModel):
     appid: str
     pt: str
+    ignore_cache: Optional[bool] = False

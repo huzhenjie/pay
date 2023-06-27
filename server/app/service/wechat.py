@@ -1,9 +1,9 @@
-import hashlib
 import json
 import time
 import base64
 import socket
 import struct
+import hashlib
 import requests
 from Crypto.Cipher import AES
 from fastapi import Depends, HTTPException
@@ -31,17 +31,18 @@ class Wechat():
         db.commit()
 
     @staticmethod
-    def get_access_token(db, pt, appid):
+    def get_access_token(db, pt, appid, ignore_cache=False):
         now_ts = int(time.time())
-        access_token = db.query(models.AccessToken) \
-            .filter(models.AccessToken.appid == appid) \
-            .order_by(models.AccessToken.id.desc()) \
-            .first()
-        if access_token and access_token.expire_time > now_ts + 60 and access_token.access_token:
-            return {
-                'access_token': access_token.access_token,
-                'expires_in': access_token.expire_time - now_ts
-            }
+        if not ignore_cache:
+            access_token = db.query(models.AccessToken) \
+                .filter(models.AccessToken.appid == appid) \
+                .order_by(models.AccessToken.id.desc()) \
+                .first()
+            if access_token and access_token.expire_time > now_ts + 60 and access_token.access_token:
+                return {
+                    'access_token': access_token.access_token,
+                    'expires_in': access_token.expire_time - now_ts
+                }
         secret = None
         if pt == 'wx_mp_cfg':
             cfg = db.query(models.WxMpCfg) \
@@ -52,17 +53,23 @@ class Wechat():
             secret = cfg.mp_app_secret
         if not secret:
             raise HTTPException(status_code=404, detail='没有找到pt=%s的相关配置信息' % pt)
-        url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s' % (
-            appid, secret)
         # {
         #   "errcode": 40013,
         #   "errmsg": "invalid appid, rid: 6482ef52-53df6042-1f53f707"
         # }
         # {
-        #   "access_token": "69_jTmo2RGzEseO3ofBPKqXn5Xjd1KlLCHKHsjXz89nGPoPlUucR-uGbJIwp9h48gTVGjMmEb-Qn-M5TccacSs73751fXIzk34PczVJK-YOpdbqX7h_Bc4fX2iO-cYSEIjADAVHL",
+        #   "access_token": "69_jTmo2RGzEs1O3ofBPKqXn5Xjd1KlLCHKHsjXz89nGPoPlUucR-uGbJIwp9h48gTVGjMmEb-Qn-M5TccacSs73751fXIzk34PczVJK-YOpdbqX7h_Bc4fX2iO-cYSEIjADAVHL",
         #   "expires_in": 7200
         # }
+        url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s' % (
+            appid, secret)
         res = requests.post(url)
+        # url = 'https://api.weixin.qq.com/cgi-bin/stable_token'
+        # res = requests.post(url, json={
+        #     'grant_type': 'client_credential',
+        #     'appid': appid,
+        #     'secret': secret
+        # })
         res_text = res.text
         res_obj = json.loads(res.text)
         access_token_str = res_obj.get('access_token')
@@ -140,6 +147,26 @@ class Wechat():
             print('appid not equal，Encrypt_appid=%s Req_appid=%s' % (from_appid, appid))
             return None
         return xml_content
+
+    @staticmethod
+    def get_media_list(db, appid, media_type, offset, count=20):
+        """
+        :param media_type: image / video / voice / news
+        :param offset: should >= 0
+        :param count: should <= 20
+        :return:
+        """
+        access_token = Wechat.get_access_token(db, 'wx_mp_cfg', appid)
+        api = 'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=%s'\
+              % access_token.get('access_token')
+        res = requests.post(api, json={
+            'type': media_type,
+            'offset': offset,
+            'count': count
+        })
+        # {"item":[{"media_id":"GWnKnmoJBxxxs7j3gvTfp11Neuk2HiM4mC3fq2xYMG0xvUSwyiKeoPhDFgCFef2j","name":"xxx.png","update_time":1680491706,"url":"https:\/\/mmbiz.qpic.cn\/mmbiz_png\/YZYh6zDpiarBFchfwrzYMpiclkTnVgYlC2lfPJHc9cIS9Mq3KKLPic4v45LoHkK8LDM6pZaJwsqx000AXT3OetYic4g\/0?wx_fmt=png","tags":[]}],"total_count":10,"item_count":10}
+        res_obj = json.loads(res.text)
+        return res_obj
 
     @staticmethod
     def get_open_id():
